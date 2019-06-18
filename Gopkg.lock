@@ -40,6 +40,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:40cecf6ef15f71324f2511591834a5a8bf1ab9caba4e3f6820509e50595a90d9"
+  name = "github.com/devopsfaith/krakend-martian"
+  packages = [
+    ".",
+    "register",
+  ]
+  pruneopts = "UT"
+  revision = "29314a524a91921568334a6d9124a7d002cdd463"
+
+[[projects]]
+  branch = "master"
   digest = "1:c81a1a75a206905bf869686cb1716fc3939aa4ca3b418159bb542d1d91092225"
   name = "github.com/devopsfaith/krakend-viper"
   packages = ["."]
@@ -285,6 +296,8 @@
   analyzer-version = 1
   input-imports = [
     "github.com/devopsfaith/krakend-gologging",
+    "github.com/devopsfaith/krakend-martian",
+    "github.com/devopsfaith/krakend-martian/register",
     "github.com/devopsfaith/krakend-viper",
     "github.com/devopsfaith/krakend/config",
     "github.com/devopsfaith/krakend/logging",
@@ -301,6 +314,7 @@
     "github.com/google/martian/parse",
     "github.com/google/martian/port",
     "github.com/google/martian/priority",
+    "github.com/google/martian/proxyutil",
     "github.com/google/martian/stash",
     "github.com/google/martian/static",
     "github.com/google/martian/status",
