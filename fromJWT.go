@@ -73,8 +73,8 @@ func (self *FromJWT) ModifyRequest(req *http.Request) error {
     return err
   }
   // results
-  fmt.Printf("req.URL: %v\n", req.URL.String())
-  fmt.Printf("req.Body: %v\n", req.Body)
+  //fmt.Printf("req.URL: %v\n", req.URL.String())
+  //fmt.Printf("req.Body: %v\n", req.Body)
   return nil
 }
 
