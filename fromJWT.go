@@ -36,12 +36,13 @@ type jwt map[string]interface{}
 // in url split by character "/" indexed from 0. So e.g. substring "{var1}" in url "/some/{var1}/path/{var2}" has
 // position 1, substring "{var2}" has position 3 etc.
 type FromJWT struct {
-  Querystring []modifierEntry        `json:"querystring"`
-  PathString  []modifierEntry        `json:"path_string"`
-  PathParam   []pathPosModifierEntry `json:"path_param"`
-  JsonBody    []modifierEntry        `json:"json_body"`
-  Scope       []parse.ModifierType   `json:"scope"`
-  jwt         jwt
+  Querystring  []modifierEntry        `json:"querystring"`
+  PathString   []modifierEntry        `json:"path_string"`
+  PathParam    []pathPosModifierEntry `json:"path_param"`
+  JsonBody     []modifierEntry        `json:"json_body"`
+  Scope        []parse.ModifierType   `json:"scope"`
+  JwtCookieKey string                 `json:"jwt_cookie_key"`
+  jwt          jwt
 }
 
 // NewModifier creates new FromJWT object (constructor).
@@ -87,15 +88,30 @@ func modifierFromJSON(b []byte) (*parse.Result, error) {
   return parse.NewResult(&modifier, modifier.Scope)
 }
 
-// parseJWT parses JWT from "Authorization" header.
+// parseJWT parses JWT from request. A JWT is parsed primary from "Authorization" header. The JWT is parsed from Cookie
+// (with name defined in FromJWT.JwtCookieKey) if it's not found in the auth header. The function fails if JWT is not
+// present in auth header, nor cookie.
 func (self *FromJWT) parseJWT(req *http.Request) (jwt, error) {
   var jwtData jwt
-  auth := req.Header.Get("Authorization")
-  if !strings.HasPrefix(auth, "Bearer ") {
-    return nil, fmt.Errorf("not \"Bearer\" prefix")
+  jwtStr := req.Header.Get("Authorization")
+  if jwtStr == "" {
+    if self.JwtCookieKey != "" {
+      cookie, err := req.Cookie(self.JwtCookieKey)
+      if err != nil {
+        return nil, fmt.Errorf("parsing jwt from cookie: %v", err)
+      }
+      jwtStr = cookie.Value
+    } else {
+      return nil, fmt.Errorf("jwt not found in auth header, nor cookie")
+    }
+  } else {
+    if !strings.HasPrefix(jwtStr, "Bearer ") {
+      return nil, fmt.Errorf("not \"Bearer\" prefix")
+    }
+    jwtStr = jwtStr[len("Bearer "):]
   }
-  jwt := auth[len("Bearer "):]
-  jwtParts := strings.Split(jwt, ".")
+  // split token into 3 parts and decode payload
+  jwtParts := strings.Split(jwtStr, ".")
   if len(jwtParts) < 3 {
     return nil, fmt.Errorf("bad format of jwt")
   }
