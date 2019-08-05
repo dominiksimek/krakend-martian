@@ -95,7 +95,7 @@
   version = "v1.3.1"
 
 [[projects]]
-  digest = "1:f2cb696c2f8dd4e7717aa71dc1ea06561e0599cbc628fd9e10106d5124760646"
+  digest = "1:f5f157bd5cf6e1a3441bc905a1e5697baad84f9a6cfef73614fa85c696a82a1c"
   name = "github.com/google/martian"
   packages = [
     ".",
@@ -111,6 +111,7 @@
     "port",
     "priority",
     "proxyutil",
+    "querystring",
     "stash",
     "static",
     "status",
@@ -315,6 +316,7 @@
     "github.com/google/martian/port",
     "github.com/google/martian/priority",
     "github.com/google/martian/proxyutil",
+    "github.com/google/martian/querystring",
     "github.com/google/martian/stash",
     "github.com/google/martian/static",
     "github.com/google/martian/status",

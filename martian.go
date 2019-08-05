@@ -1,30 +1,31 @@
 package martian
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"io/ioutil"
-	"net/http"
+  "bytes"
+  "context"
+  "encoding/json"
+  "errors"
+  "io/ioutil"
+  "net/http"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/logging"
-	"github.com/devopsfaith/krakend/proxy"
-	"github.com/devopsfaith/krakend/transport/http/client"
+  "github.com/devopsfaith/krakend/config"
+  "github.com/devopsfaith/krakend/logging"
+  "github.com/devopsfaith/krakend/proxy"
+  "github.com/devopsfaith/krakend/transport/http/client"
 
-	// import the required martian packages so they can be used
-	"github.com/google/martian"
-	_ "github.com/google/martian/body"
-	_ "github.com/google/martian/cookie"
-	_ "github.com/google/martian/fifo"
-	_ "github.com/google/martian/header"
-	_ "github.com/google/martian/martianurl"
-	"github.com/google/martian/parse"
-	_ "github.com/google/martian/port"
-	_ "github.com/google/martian/priority"
-	_ "github.com/google/martian/stash"
-	_ "github.com/google/martian/status"
+  // import the required martian packages so they can be used
+  "github.com/google/martian"
+  _ "github.com/google/martian/body"
+  _ "github.com/google/martian/cookie"
+  _ "github.com/google/martian/fifo"
+  _ "github.com/google/martian/header"
+  _ "github.com/google/martian/martianurl"
+  "github.com/google/martian/parse"
+  _ "github.com/google/martian/port"
+  _ "github.com/google/martian/priority"
+  _ "github.com/google/martian/querystring"
+  _ "github.com/google/martian/stash"
+  _ "github.com/google/martian/status"
 )
 
 // NewBackendFactory creates a proxy.BackendFactory with the martian request executor wrapping the injected one.
