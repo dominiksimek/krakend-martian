@@ -52,11 +52,10 @@ func NewModifier() *FromJWT {
 
 // ModifyRequest modifies request.
 func (self *FromJWT) ModifyRequest(req *http.Request) error {
-  jwt, err := self.parseJWT(req)
+  jwt, err := self.parseJwtValues(req)
   if err != nil {
     return err
   }
-  //fmt.Printf("jwt.payload: %v\n", jwt)
   // modify query params
   if err := self.modifyQuerystring(req, jwt); err != nil {
     return err
@@ -88,30 +87,28 @@ func modifierFromJSON(b []byte) (*parse.Result, error) {
   return parse.NewResult(&modifier, modifier.Scope)
 }
 
-// parseJWT parses JWT from request. A JWT is parsed primary from "Authorization" header. The JWT is parsed from Cookie
-// (with name defined in FromJWT.JwtCookieKey) if it's not found in the auth header. The function fails if JWT is not
-// present in auth header, nor cookie.
-func (self *FromJWT) parseJWT(req *http.Request) (jwt, error) {
+// parseJwtValues parses JWT included in request. A JWT is parsed primary from "Authorization" header. The JWT
+// is parsed from Cookie (with name defined in FromJWT.JwtCookieKey) if it's not found in the auth header.
+// The function fails if JWT is not present in auth header, nor cookie.
+func (self *FromJWT) parseJwtValues(req *http.Request) (jwt, error) {
   var jwtData jwt
-  jwtStr := req.Header.Get("Authorization")
-  if jwtStr == "" {
-    if self.JwtCookieKey != "" {
-      cookie, err := req.Cookie(self.JwtCookieKey)
-      if err != nil {
-        return nil, fmt.Errorf("parsing jwt from cookie: %v", err)
-      }
-      jwtStr = cookie.Value
-    } else {
-      return nil, fmt.Errorf("jwt not found in auth header, nor cookie")
-    }
-  } else {
-    if !strings.HasPrefix(jwtStr, "Bearer ") {
-      return nil, fmt.Errorf("not \"Bearer\" prefix")
-    }
-    jwtStr = jwtStr[len("Bearer "):]
+  raw := ""
+  if h := req.Header.Get("Authorization"); len(h) > 7 && strings.EqualFold(h[0:7], "BEARER ") {
+    raw = h[7:]
   }
+  if raw == "" {
+    cookie, err := req.Cookie(self.JwtCookieKey)
+    if err != nil {
+      return nil, err
+    }
+    raw = cookie.Value
+  }
+  if raw == "" {
+    return nil, fmt.Errorf("jwt not found in auth header, nor cookie")
+  }
+
   // split token into 3 parts and decode payload
-  jwtParts := strings.Split(jwtStr, ".")
+  jwtParts := strings.Split(raw, ".")
   if len(jwtParts) < 3 {
     return nil, fmt.Errorf("bad format of jwt")
   }
@@ -120,7 +117,7 @@ func (self *FromJWT) parseJWT(req *http.Request) (jwt, error) {
     return nil, err
   }
   if err := json.Unmarshal(b, &jwtData); err != nil {
-      return nil, err
+    return nil, err
   }
   return jwtData, nil
 }
@@ -164,7 +161,7 @@ func (self *FromJWT) modifyQuerystring(req *http.Request, jwt jwt) error {
   for _, entry := range self.Querystring {
     newVal, ok := jwt[entry.KeyJWT]
     if !ok {
-      return fmt.Errorf("key=%v not in jwt", entry.KeyJWT)
+      return fmt.Errorf("key=%s not in jwt", entry.KeyJWT)
     }
     query.Set(entry.Name, fmt.Sprintf("%v", newVal))
     // if there are more parameters with same name (e.g. ?key1=10&key1=20&key1=30), query.Set rewrites this array by
@@ -179,7 +176,7 @@ func (self *FromJWT) modifyPathParams(req *http.Request, jwt jwt) error {
   for _, entry := range self.PathParam {
     newVal, ok := jwt[entry.KeyJWT]
     if !ok {
-      return fmt.Errorf("key=%v not in jwt", entry.KeyJWT)
+      return fmt.Errorf("key=%s not in jwt", entry.KeyJWT)
     }
     req.URL.Path = self.replaceVarInUrl(req.URL.Path, entry.Position, fmt.Sprintf("%v", newVal))
   }
@@ -191,7 +188,7 @@ func (self *FromJWT) modifyPathStrings(req *http.Request, jwt jwt) error {
   for _, entry := range self.PathString {
     newVal, ok := jwt[entry.KeyJWT]
     if !ok {
-      return fmt.Errorf("key=%v not in jwt", entry.KeyJWT)
+      return fmt.Errorf("key=%s not in jwt", entry.KeyJWT)
     }
     req.URL.Path = strings.ReplaceAll(req.URL.Path, entry.Name, fmt.Sprintf("%v", newVal))
   }
@@ -201,7 +198,7 @@ func (self *FromJWT) modifyPathStrings(req *http.Request, jwt jwt) error {
 // modifyPathStrings rewrites specified key in a json body by specified value from JWT. Nested fields (json paths) and
 // json arrays are not supported for now.
 func (self *FromJWT) modifyBodyJson(req *http.Request, jwt jwt) error {
-  if req.Body == nil || len(self.JsonBody) == 0 {
+  if req.Body == nil || len(self.JsonBody) == 0 || req.Header.Get("Content-type") != "application/json" {
     return nil
   }
   bodyBytes, err := ioutil.ReadAll(req.Body)
@@ -218,7 +215,7 @@ func (self *FromJWT) modifyBodyJson(req *http.Request, jwt jwt) error {
   for _, entry := range self.JsonBody {
     newVal, ok := jwt[entry.KeyJWT]
     if !ok {
-      return fmt.Errorf("key=%v not in jwt", entry.KeyJWT)
+      return fmt.Errorf("key=%s not in jwt", entry.KeyJWT)
     }
     bodyData[entry.Name] = newVal
   }
