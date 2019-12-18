@@ -198,7 +198,8 @@ func (self *FromJWT) modifyPathStrings(req *http.Request, jwt jwt) error {
 // modifyPathStrings rewrites specified key in a json body by specified value from JWT. Nested fields (json paths) and
 // json arrays are not supported for now.
 func (self *FromJWT) modifyBodyJson(req *http.Request, jwt jwt) error {
-  if req.Body == nil || len(self.JsonBody) == 0 || req.Header.Get("Content-type") != "application/json" {
+  if req.Body == nil || len(self.JsonBody) == 0 ||
+    !strings.Contains(req.Header.Get("Content-type"), "application/json") {
     return nil
   }
   bodyBytes, err := ioutil.ReadAll(req.Body)
